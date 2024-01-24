@@ -13,10 +13,10 @@ start syntax Form
 // TODO: question, computed question, block, if-then-else, if-then
 
 syntax Question
-  = question: Str label Id id ":" Type type
-  | computedQuestion: Str label Id id ":" Type type "=" Expr expr
+  = question: Str questionString Id i ":" Type type
+  | exprQuestion: Str questionString Id id ":" Type type "=" Expr expr
   | block: "{" Question* questions "}"
-  | ifThen: "if" "(" Expr expr ")" Question () !>> "else"
+  | ifThen: "if" "(" Expr expr ")" Question question !>> "else"
   | ifThenElse: "if" "(" Expr expr ")" Question question "else" Question question
   ;
 
@@ -30,21 +30,17 @@ syntax Expr
   | Bool 
   | bracket "(" Expr ")"
   > not: "!" Expr
-  > left (
-      mul: Expr "*" Expr
-    | div: Expr "/" Expr
-  )
-  > left (
-      add: Expr "+" Expr
-    | sub: Expr "-" Expr
-  )
+  > left mul: Expr "*" Expr
+  > left div: Expr "/" Expr
+  > left add: Expr "+" Expr
+  > left sub: Expr "-" Expr
   > non-assoc (
       Expr "\<" Expr
     | Expr "\<=" Expr
     | Expr "\>" Expr
     | Expr "\>=" Expr
-    | Expr "==" Expr
     | Expr "!=" Expr
+    | Expr "==" Expr
   )
   > left and: Expr "&&" Expr
   > left or: Expr "||" Expr

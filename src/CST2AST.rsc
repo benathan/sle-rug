@@ -2,10 +2,9 @@ module CST2AST
 
 import Syntax;
 import AST;
+import String;
 
 import ParseTree;
-import String;
-import Boolean;
 
 /*
  * Implement a mapping from concrete syntax trees (CSTs) to abstract syntax trees (ASTs)
@@ -23,47 +22,61 @@ AForm cst2ast(start[Form] sf) {
 }
 
 default AQuestion cst2ast(Question q) {
-  	switch(q) {
-		case (Question)`<Str l> <Id i> : <Type t>`: 
-			return question("<l>", id("<i>", src=i.src), cst2ast(t), src=q.src);
-		case (Question)`<Str l> <Id i> : <Type t> = <Expr e>`: 
-			return computedQuestion("<l>", id("<i>", src=i.src), cst2ast(t), cst2ast(e), src=q.src);
-		case (Question)`if (<Expr e>) {<Question* qs>}`: 
-			return ifBlock(cst2ast(e), [cst2ast(q) | Question q <- qs], src=q.src);
-		case (Question)`if (<Expr e>) {<Question* qs>} else {<Question* qes>}`: 
-			return ifElse(cst2ast(e), [cst2ast(q) | Question q <- qs], [cst2ast(q) | Question q <- qes], src=q.src);
-		default: throw "Unhandled question: <q>";
-	}
+  switch (q) {
+    case (Question) `<Str s> <Id i> : <Type t>` : return question("<s>", id("<i>"), cst2ast(t));
+    case (Question) `<Str s> <Id i> : <Type t> = <Expr e>` : return exprQuestion("<s>", id("<i>"), cst2ast(t), cst2ast(e));
+    // case (Question) `{Question* questions}` : return block(cst2ast(questions));
+
+    case (Question) `if (<Expr e>) <Question q> else <Question elseq>` : return ifThenElse(cst2ast(e), cst2ast(q), cst2ast(elseq));
+    case (Question) `if (<Expr e>) <Question q>` : return ifThen(cst2ast(e), cst2ast(q));
+  }
+
+  throw "unhandled Question <q>";
+}
+
+
+bool toBool(str s) {
+  if (s == "true") {
+    return true;
+  } else if (s == "false") {
+    return false;
+  }
+  throw "failed toBool";
 }
 
 AExpr cst2ast(Expr e) {
   switch (e) {
-    case (Expr)`<Id x>`: return ref(id("<x>", src=x.src), src=x.src);
-    case (Expr)`<Int n>`: return intLit(toInt("<n>"), src=n.src);
-    case (Expr)`<Str s>`: return strLit("<s>", src=s.src);
-    case (Expr)`<Bool b>`: return boolLit(fromString("<b>"), src=b.src);
-    case (Expr)`(<Expr e>)`: return cst2ast(e);
-    case (Expr)`<Expr e1> + <Expr e2>`: return add(cst2ast(e1), cst2ast(e2), src=e.src);
-    case (Expr)`<Expr e1> - <Expr e2>`: return sub(cst2ast(e1), cst2ast(e2), src=e.src);
-    case (Expr)`<Expr e1> * <Expr e2>`: return mul(cst2ast(e1), cst2ast(e2), src=e.src);
-    case (Expr)`<Expr e1> / <Expr e2>`: return div(cst2ast(e1), cst2ast(e2), src=e.src);
-    case (Expr)`<Expr e1> \< <Expr e2>`: return lt(cst2ast(e1), cst2ast(e2), src=e.src);
-    case (Expr)`<Expr e1> \> <Expr e2>`: return gt(cst2ast(e1), cst2ast(e2), src=e.src);
-    case (Expr)`<Expr e1> \<= <Expr e2>`: return lte(cst2ast(e1), cst2ast(e2), src=e.src);
-    case (Expr)`<Expr e1> \>= <Expr e2>`: return gte(cst2ast(e1), cst2ast(e2), src=e.src);
-    case (Expr)`<Expr e1> == <Expr e2>`: return equal(cst2ast(e1), cst2ast(e2), src=e.src); 
-    case (Expr)`<Expr e1> != <Expr e2>`: return neq(cst2ast(e1), cst2ast(e2), src=e.src);
-    case (Expr)`<Expr e1> && <Expr e2>`: return and(cst2ast(e1), cst2ast(e2), src=e.src);
-    case (Expr)`<Expr e1> || <Expr e2>`: return or(cst2ast(e1), cst2ast(e2), src=e.src);
+    case (Expr)`<Id x>`: return ref(id("<x>"));
+    case (Expr)`<Int n>`: return aInt(toInt("<n>"));
+    case (Expr)`<Str s>`: return aString("<s>");
+    case (Expr)`<Bool b>`: return aBool(toBool("<b>"));
+    case (Expr)`(<Expr expr>)` : return aBracket(cst2ast(expr));
+    case (Expr)`!<Expr expr>` : return not(cst2ast(expr));
+    case (Expr)`<Expr lexpr> * <Expr rexpr>` : return mul(cst2ast(lexpr), cst2ast(rexpr));
+    case (Expr)`<Expr lexpr> / <Expr rexpr>` : return div(cst2ast(lexpr), cst2ast(rexpr));
+    case (Expr)`<Expr lexpr> + <Expr rexpr>` : return add(cst2ast(lexpr), cst2ast(rexpr));
+    case (Expr)`<Expr lexpr> - <Expr rexpr>` : return sub(cst2ast(lexpr), cst2ast(rexpr));
+    case (Expr)`<Expr lexpr> \< <Expr rexpr>` : return less(cst2ast(lexpr), cst2ast(rexpr));
+    case (Expr)`<Expr lexpr> \<= <Expr rexpr>` : return leq(cst2ast(lexpr), cst2ast(rexpr));
+    case (Expr)`<Expr lexpr> \> <Expr rexpr>` : return greater(cst2ast(lexpr), cst2ast(rexpr));
+    case (Expr)`<Expr lexpr> \>= <Expr rexpr>` : return greq(cst2ast(lexpr), cst2ast(rexpr));
+    case (Expr)`<Expr lexpr> == <Expr rexpr>` : return eq(cst2ast(lexpr), cst2ast(rexpr));
+    case (Expr)`<Expr lexpr> != <Expr rexpr>` : return neq(cst2ast(lexpr), cst2ast(rexpr));
+    case (Expr)`<Expr lexpr> && <Expr rexpr>` : return and(cst2ast(lexpr), cst2ast(rexpr));
+    case (Expr)`<Expr lexpr> || <Expr rexpr>` : return or(cst2ast(lexpr), cst2ast(rexpr));
+
     default: throw "Unhandled expression: <e>";
   }
 }
 
-AType cst2ast(Type t) {
-  switch(t) {
-    case (Type)`boolean`: return boolean(src=t.src);
-    case (Type)`integer`: return integer(src=t.src);
-    case (Type)`string`: return string(src=t.src);
-    default: throw "Unhandled type: <t>";
+AType cst2ast((Type)`<Str s>`) {
+  switch (s) {
+    case "integer" : return integer();
+    case "string" : return string();
+    case "boolean" : return boolean();
   }
+  throw "Unhandled type: <s>";
+}
+default AType cst2ast(Type t) {
+  throw "Unhandled type: <t>";
 }
