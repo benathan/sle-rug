@@ -24,9 +24,70 @@ void compile(AForm f) {
   writeFile(f.src[extension="html"].top, writeHTMLString(form2html(f)));
 }
 
+// Booleans -> checkboxes
+// Strings -> textfields
+// Integers -> numeric text fields
 HTMLElement form2html(AForm f) {
-  return html([]);
+  list[HTMLElement] htmlList = [];
+  // str name = f.name;
+
+  visit (f) {
+    case AQuestion q: {
+      htmlList += question2html(q);
+    }
+  }
+
+  return body(htmlList);
 }
+
+
+list[HTMLElement] question2html(AQuestion q) {
+  list[HTMLElement] htmlList = [];
+  
+  switch (q) {
+    case question(str questionString, AId id, AType t): {
+      htmlList += p([text(questionString)]);
+      htmlList += option2html(t);
+    }
+    case exprQuestion(str questionString, AId id, AType t, AExpr expr): {
+      htmlList += p([text(questionString)]);
+      // is calculated
+      // htmlList += option2html(t);
+    }
+    case block(list[AQuestion] questions): {
+      for (AQuestion question <- questions) {
+        htmlList += question2html(question);
+      }
+    }
+    // case ifThen(AExpr expr, AQuestion question)
+    // case ifThenElse(AExpr expr, AQuestion question, AQuestion elseQuestion)
+  }
+
+  return htmlList;
+}
+
+
+HTMLElement option2html(AType t) {
+  switch (t) {
+    case boolean(): {
+      HTMLElement checkbox = input();
+      checkbox.\type = "checkbox";
+      return checkbox;
+    }
+    case string(): {
+      HTMLElement textfield = input();
+      textfield.\type = "text";
+      return textfield;
+    }
+    case integer(): {
+      HTMLElement numericTextfield = input();
+      numericTextfield.\type = "number";
+      return numericTextfield;
+    }
+  }
+  throw "html option not found";
+}
+
 
 str form2js(AForm f) {
   return "";
