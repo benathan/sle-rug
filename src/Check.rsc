@@ -1,9 +1,9 @@
+//TODO: Integer --------Fixed
 module Check
 
 import AST;
 import Resolve;
 import Message; // see standard library
-// import IO;
 
 data Type
   = tint()
@@ -122,33 +122,33 @@ set[Message] check(AExpr e, TEnv tenv, UseDef useDef) {
       }
     }
     case less(AExpr lhs, AExpr rhs): {
-      if (typeOf(lhs, tenv, useDef) != tbool() || typeOf(rhs, tenv, useDef) != tbool()) {
-        msgs += { error("Operator \< requires boolean operands", e.src) };
+      if (typeOf(lhs, tenv, useDef) != tint() || typeOf(rhs, tenv, useDef) != tint()) {
+        msgs += { error("Operator \< requires integer operands", e.src) };
       }
     }
     case greater(AExpr lhs, AExpr rhs): {
-      if (typeOf(lhs, tenv, useDef) != tbool() || typeOf(rhs, tenv, useDef) != tbool()) {
-        msgs += { error("Operator \> requires boolean operands", e.src) };
+      if (typeOf(lhs, tenv, useDef) != tint() || typeOf(rhs, tenv, useDef) != tint()) {
+        msgs += { error("Operator \> requires integer operands", e.src) };
       }
     }
     case leq(AExpr lhs, AExpr rhs): {
-      if (typeOf(lhs, tenv, useDef) != tbool() || typeOf(rhs, tenv, useDef) != tbool()) {
-        msgs += { error("Operator \<= requires boolean operands", e.src) };
+      if (typeOf(lhs, tenv, useDef) != tint() || typeOf(rhs, tenv, useDef) != tint()) {
+        msgs += { error("Operator \<= requires integer operands", e.src) };
       }
     }
     case greq(AExpr lhs, AExpr rhs): {
-      if (typeOf(lhs, tenv, useDef) != tbool() || typeOf(rhs, tenv, useDef) != tbool()) {
-        msgs += { error("Operator \>= requires boolean operands", e.src) };
+      if (typeOf(lhs, tenv, useDef) != tint() || typeOf(rhs, tenv, useDef) != tint()) {
+        msgs += { error("Operator \>= requires integer operands", e.src) };
       }
     }
     case eq(AExpr lhs, AExpr rhs): {
-      if (typeOf(lhs, tenv, useDef) != tbool() || typeOf(rhs, tenv, useDef) != tbool()) {
-        msgs += { error("Operator == requires boolean operands", e.src) };
+      if (typeOf(lhs, tenv, useDef) != tint() || typeOf(rhs, tenv, useDef) != tint()) {
+        msgs += { error("Operator == requires integer operands", e.src) };
       }
     }
     case neq(AExpr lhs, AExpr rhs): {
-      if (typeOf(lhs, tenv, useDef) != tbool() || typeOf(rhs, tenv, useDef) != tbool()) {
-        msgs += { error("Operator != requires boolean operands", e.src) };
+      if (typeOf(lhs, tenv, useDef) != tint() || typeOf(rhs, tenv, useDef) != tint()) {
+        msgs += { error("Operator != requires integer operands", e.src) };
       }
     }
     case or(AExpr lhs, AExpr rhs): {

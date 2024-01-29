@@ -36,7 +36,7 @@ RefGraph resolve(AForm f) = <us, ds, us o ds>
 Use uses(AForm f) {
   Use result = {};
 
-  for (/AId i := f) {
+  for (/ref(AId i) := f) {
     result += {<i.src, i.name>};
   }
   return result; 

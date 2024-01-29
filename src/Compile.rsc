@@ -1,3 +1,4 @@
+//TODO: should use for loop instead of visit, complete the exercise
 module Compile
 
 import AST;
@@ -5,6 +6,8 @@ import Resolve;
 import IO;
 import lang::html::AST; // see standard library
 import lang::html::IO;
+import Boolean;
+import util::Math;
 
 /*
  * Implement a compiler for QL to HTML and Javascript
@@ -31,23 +34,36 @@ HTMLElement form2html(AForm f) {
   list[HTMLElement] htmlList = [];
   // str name = f.name;
 
-  visit (f) {
-    case AQuestion q: {
-      htmlList += question2html(q);
-    }
+  // HTMLElement scriptTag = script([], src=f.src[extension="js"].file);
+  // htmlList += scriptTag;
+
+  // test vue
+  // HTMLElement checkbox = input(\type="checkbox");
+  // checkbox.id = "test0";
+  // htmlList += checkbox;
+
+  // visit (f) {
+  //   case AQuestion q: {
+  //     htmlList += question2html(q);
+  //   }
+  // }
+  list[HTMLElement] questions = [];
+  for(AQuestion q <- f.questions) {
+    questions += question2html(q);
   }
 
-  return body(htmlList);
+  // return body([script([], src="https://unpkg.com/vue@3/dist/vue.global.js"),form([div(htmlList)]), script([], src="tax.js")]);
+  return body([div([script([], src="https://unpkg.com/vue@3/dist/vue.global.js"), form([div(htmlList)]), script([], src="tax.js")], \id="app")]);
 }
 
 
-list[HTMLElement] question2html(AQuestion q) {
+HTMLElement question2html(AQuestion q) {
   list[HTMLElement] htmlList = [];
   
   switch (q) {
-    case question(str questionString, AId id, AType t): {
+    case question(str questionString, id(str i), AType t): {
       htmlList += p([text(questionString)]);
-      htmlList += option2html(t);
+      htmlList += option2html(t, i);
     }
     case exprQuestion(str questionString, AId id, AType t, AExpr expr): {
       htmlList += p([text(questionString)]);
@@ -55,33 +71,53 @@ list[HTMLElement] question2html(AQuestion q) {
       // htmlList += option2html(t);
     }
     case block(list[AQuestion] questions): {
+      list[HTMLElement] blockList = [];
       for (AQuestion question <- questions) {
-        htmlList += question2html(question);
+        blockList += question2html(question);
       }
+      htmlList += div(blockList);
     }
-    // case ifThen(AExpr expr, AQuestion question)
-    // case ifThenElse(AExpr expr, AQuestion question, AQuestion elseQuestion)
+    case ifThen(AExpr expr, AQuestion question): {
+      class = "ifThen";
+      id = "ifelse<1>";
+      list[HTMLElement] ifQ = [];
+      for (AQuestion q <- question) ifQ += question2html(q);
+      htmlList += div(ifQ, class="if <id>");
+    }
+    case ifThenElse(AExpr expr, AQuestion question, AQuestion elseQuestion): {
+      class = "ifThenElse";
+      id = "ifThenElse<1>";
+      list[HTMLElement] ifQ = [];
+      list[HTMLElement] elseQ = [];
+      for (AQuestion q <- question) ifQ += question2html(q);
+      for (AQuestion q <- elseQuestion) elseQ += question2html(q);
+      htmlList += div(ifQ, class="if <id>");
+      htmlList += div(elseQ, class="else <id>");
+    }
   }
-
   return htmlList;
+  // return [label([q], \for=q.id), div(htmlList)];
 }
 
 
-HTMLElement option2html(AType t) {
+HTMLElement option2html(AType t, str i) {
   switch (t) {
     case boolean(): {
       HTMLElement checkbox = input();
       checkbox.\type = "checkbox";
+      checkbox.\id = i;
       return checkbox;
     }
     case string(): {
       HTMLElement textfield = input();
       textfield.\type = "text";
+      textfield.\id = i;
       return textfield;
     }
     case integer(): {
       HTMLElement numericTextfield = input();
       numericTextfield.\type = "number";
+      numericTextfield.\id = i;
       return numericTextfield;
     }
   }
@@ -90,5 +126,52 @@ HTMLElement option2html(AType t) {
 
 
 str form2js(AForm f) {
-  return "";
+  str jsList = "";
+
+  jsList += "import Vue from \'vue\';\n";
+  
+  jsList += "var app = new Vue({";
+  jsList += "  el: \'#app\',";
+  jsList += "  data: { \n";
+  
+
+  visit (f) {
+    case AQuestion q: {
+      jsList += question2js(q);
+      jsList += "\n";
+    }
+  }
+  
+  jsList += "}";
+  
+  jsList += "}).mount(\'#app\')";
+
+  return jsList;
+}
+
+str question2js(AQuestion q) {
+  str jsList = "";
+  
+  switch (q) {
+    case question(str questionString, AId id, AType t): {
+      // Add a data property for each question
+      jsList += "    " + id.name + ": ";
+      jsList += (t == boolean() ? "false" : (t == string() ? "" : "0")) + ",";
+    }
+    // case exprQuestion(str questionString, AId id, AType t, AExpr expr): {
+    // }
+    case block(list[AQuestion] questions): {
+      for (AQuestion question <- questions) {
+        jsList += question2js(question);
+      }
+    }
+    case ifThen(AExpr expr, AQuestion question): {
+       jsList += question2js(question);
+    }
+    case ifThenElse(AExpr expr, AQuestion question, AQuestion elseQuestion): {
+       jsList += question2js(question);
+    }
+  }
+
+  return jsList;
 }
